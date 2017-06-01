@@ -35,7 +35,7 @@
  // For more information, please refer to <http://unlicense.org/>
  */
 
-#include "crypto_aead.h"
+//#include "crypto_aead.h"
 #include <stdint.h>
 #include <stddef.h>
 
@@ -557,6 +557,14 @@ static block pass_two(aez_ctx_t *ctx, block s, unsigned bytes, block *dst) {
 /* ------------------------------------------------------------------------- */
 /*
 	The one that matters. Read this and understand this.
+	Inputs ->
+	1. ctx - Context
+	2. t - Takes into account the Additional Data
+	3. d - Probably specifies whether cipher is same size as message
+	4. src - Message
+	5. bytes - Message length
+	6. abytes - ABYTE
+	7. dst - Cipher
 */
 static int cipher_aez_core(aez_ctx_t *ctx, block t, int d, char *src,
                            unsigned bytes, unsigned abytes, char *dst) {
@@ -714,7 +722,7 @@ static int cipher_aez_tiny(aez_ctx_t *ctx, block t, int d, char *src,
 
 /* ------------------------------------------------------------------------- */
 /*
-	Encryptst the message.
+	Encrypts the message.
 	Inputs ->
 	1. ctx - Context
 	2. n - Nonce
