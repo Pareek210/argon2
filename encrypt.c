@@ -243,6 +243,8 @@ static int blake2b(void *out, size_t outlen,
 
 /* ------------------------------------------------------------------------- */
 
+// Setup function. Sort of initialisation.
+// Filled all the values with somethings, don't need to know what exactly.
 void aez_setup(unsigned char *key, unsigned keylen, aez_ctx_t *ctx) {
     block tmp;
     if (keylen==48) {
@@ -266,6 +268,16 @@ void aez_setup(unsigned char *key, unsigned keylen, aez_ctx_t *ctx) {
 /* ------------------------------------------------------------------------- */
 
 /* !! Warning !! Only handles nbytes <= 16 and abytes <= 16 */
+/*
+	Hash function.
+	Inputs ->
+	1. ctx - Context
+	2. n - Nonce
+	3. nbytes - Nonce length
+	4. ad - Additional Data
+	5. adbytes - Additional Data length
+	6. abytes - ABYTES
+*/
 static block aez_hash(aez_ctx_t *ctx, char *n, unsigned nbytes, char *ad,
                unsigned adbytes, unsigned abytes) {
     block o1, o2, o3, o4, o5, o6, o7, o8, sum, offset, tmp;
@@ -543,7 +555,9 @@ static block pass_two(aez_ctx_t *ctx, block s, unsigned bytes, block *dst) {
 }
 
 /* ------------------------------------------------------------------------- */
-
+/*
+	The one that matters. Read this and understand this.
+*/
 static int cipher_aez_core(aez_ctx_t *ctx, block t, int d, char *src,
                            unsigned bytes, unsigned abytes, char *dst) {
     block s, x, y, frag0, frag1, final0, final1;
@@ -699,11 +713,24 @@ static int cipher_aez_tiny(aez_ctx_t *ctx, block t, int d, char *src,
 }
 
 /* ------------------------------------------------------------------------- */
-
+/*
+	Encryptst the message.
+	Inputs ->
+	1. ctx - Context
+	2. n - Nonce
+	3. nbytes - Nonce length
+	4. ad - Additional data
+	5. adbytes - Additional data bytes
+	6. abytes - ABYTES
+	7. src - Message
+	8. bytes - Message length
+	9. dst -  Destination for Cipher
+*/
 void aez_encrypt(aez_ctx_t *ctx, char *n, unsigned nbytes,
                  char *ad, unsigned adbytes, unsigned abytes,
                  char *src, unsigned bytes, char *dst) {
 
+	// Hash function.
     block t = aez_hash(ctx, n, nbytes, ad, adbytes, abytes);
     if (bytes==0) {
         unsigned i;
@@ -907,7 +934,16 @@ static int blake2b(void *out, size_t outlen,
 /* aez mapping for CAESAR competition                                        */
 
 /*  The parent function. Look at it and understand what it does. 
-    Inputs -> 
+    Inputs -> All are pointers
+    1. c - Cipher
+    2. clen - Cipher Length
+    3. m - Message
+    4. mlen - Message Length
+    5. ad - Additional Data ( confirm )
+    6. adlen - Additional Data length
+    7. nsec - Nonce related something
+    8. npub - Nonce related something
+    9. k - key
 */
 int crypto_aead_encrypt(
     unsigned char *c,unsigned long long *clen,
@@ -918,10 +954,13 @@ int crypto_aead_encrypt(
     const unsigned char *k
 )
 {
-    aez_ctx_t ctx;
-    (void)nsec;
-    if (clen) *clen = mlen+16;
+    aez_ctx_t ctx; // defined a context 
+    (void)nsec; 
+    if (clen) *clen = mlen+16; 
+    // Calls the setup function
     aez_setup((unsigned char *)k, 48, &ctx);
+    // The main function.
+    // 
     aez_encrypt(&ctx, (char *)npub, 12,
                  (char *)ad, (unsigned)adlen, 16,
                  (char *)m, (unsigned)mlen, (char *)c);
