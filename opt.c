@@ -71,6 +71,9 @@ static void fill_block(__m128i *state, const block *ref_block,
     }
 }
 
+/* My Code begin */
+
+
 static void fill_block_new(__m128i *state, const block *ref_block,
                        block *next_block, int with_xor) {
     _m128i block_XY[ARGON2_OWORDS_IN_BLOCK];
