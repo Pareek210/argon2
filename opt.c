@@ -71,6 +71,48 @@ static void fill_block(__m128i *state, const block *ref_block,
     }
 }
 
+static void fill_block_new(__m128i *state, const block *ref_block,
+                       block *next_block, int with_xor) {
+    _m128i block_XY[ARGON2_OWORDS_IN_BLOCK];
+    unsigned int m = ARGON2_OWORDS_IN_BLOCK * 8 ;
+    unsigned int i;
+
+    /* This is the round function. state stores the X1||Y1 to be hashed. */
+    if(with_xor) {
+        for (i = 0; i < ARGON2_OWORDS_IN_BLOCK/2; i++) {
+            block_XY[i] = _mm_xor_si128(
+                state[i+ ARGON2_OWORDS_IN_BLOCK/2], _mm_loadu_si128((const __m128i *)next_block->v + i)) ;
+        }
+        for (i = ARGON2_OWORDS_IN_BLOCK/2; i < ARGON2_OWORDS_IN_BLOCK; i++) {
+            state[i] = _mm_loadu_si128((const __m128i *)ref_block->v + i - ARGON2_OWORDS_IN_BLOCK/2);
+            block_XY[i] = _mm_xor_si128(
+                _mm_loadu_si128((const __m128i *)ref_block->v + i), _mm_loadu_si128((const __m128i *)next_block->v + i)) ;
+        }
+    } else {
+        for (i = 0; i < ARGON2_OWORDS_IN_BLOCK/2; i++) {
+            block_XY[i] = state[i+ ARGON2_OWORDS_IN_BLOCK/2] ;
+        }
+        for (i = ARGON2_OWORDS_IN_BLOCK/2; i < ARGON2_OWORDS_IN_BLOCK; i++) {
+            state[i] = _mm_loadu_si128((const __m128i *)ref_block->v + i - ARGON2_OWORDS_IN_BLOCK/2);
+            block_XY[i] = _mm_loadu_si128((const __m128i *)ref_block->v + i) ;
+        }
+    }
+
+    /* This is where the new wide cipher comes in.*/
+
+    
+
+    /* Wide Cipher ends! */
+    
+    for (i = 0; i < ARGON2_OWORDS_IN_BLOCK; i++) {
+        state[i] = _mm_xor_si128(state[i], block_XY[i]);
+        _mm_storeu_si128((__m128i *)next_block->v + i, state[i]);
+    }
+
+}
+
+/* My Code end */
+
 static void next_addresses(block *address_block, block *input_block) {
     /*Temporary zero-initialized blocks*/
     __m128i zero_block[ARGON2_OWORDS_IN_BLOCK];
