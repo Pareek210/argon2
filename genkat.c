@@ -22,7 +22,7 @@
 #include "argon2.h"
 #include "core.h"
 
-void initial_kat(const uint8_t *blockhash, const argon2_context *context,
+void initial_kat(const uint8_t *blockhash, const argon2_context *context, /* Checked 1 */
                  argon2_type type) {
     unsigned i;
 
@@ -36,9 +36,9 @@ void initial_kat(const uint8_t *blockhash, const argon2_context *context,
 
 
         printf("Memory: %u KiB, Iterations: %u, Parallelism: %u lanes, Tag "
-               "length: %u bytes\n",
+               "length: %u bytes, Local Parallelism: %u units\n",
                context->m_cost, context->t_cost, context->lanes,
-               context->outlen);
+               context->outlen, context->local_parallelism);
 
         printf("Password[%u]: ", context->pwdlen);
 
@@ -146,6 +146,7 @@ static void generate_testvectors(argon2_type type, const uint32_t version) {
     unsigned t_cost = 3;
     unsigned m_cost = 32;
     unsigned lanes = 4;
+    unsigned local_parallelism = 4 ;
 
     memset(pwd, 1, TEST_OUTLEN);
     memset(salt, 2, TEST_SALTLEN);
@@ -166,6 +167,7 @@ static void generate_testvectors(argon2_type type, const uint32_t version) {
     context.t_cost = t_cost;
     context.m_cost = m_cost;
     context.lanes = lanes;
+    context.local_parallelism = local_parallelism;
     context.threads = lanes;
     context.allocate_cbk = myown_allocator;
     context.free_cbk = myown_deallocator;

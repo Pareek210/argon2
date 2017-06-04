@@ -38,6 +38,7 @@
 //#include "crypto_aead.h"
 #include <stdint.h>
 #include <stddef.h>
+#include <stdio.h>
 
 /* ------------------------------------------------------------------------- */
 #if __AES__                /* Defined by gcc/clang when compiling for AES-NI */
@@ -747,7 +748,7 @@ void aez_encrypt(aez_ctx_t *ctx, char *n, unsigned nbytes,
     } else if (bytes+abytes < 32)
         cipher_aez_tiny(ctx, t, 0, src, bytes, abytes, dst);
     else
-        cipher_aez_core(ctx, t, 0, src, bytes, abytes, dst);
+        cipher_aez_c.ore(ctx, t, 0, src, bytes, abytes, dst);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -969,8 +970,8 @@ int crypto_aead_encrypt(
     aez_setup((unsigned char *)k, 48, &ctx);
     // The main function.
     // 
-    aez_encrypt(&ctx, (char *)npub, 12,
-                 (char *)ad, (unsigned)adlen, 16,
+    aez_encrypt(&ctx, (char *)npub, 0,
+                 (char *)ad, (unsigned)adlen, 0,
                  (char *)m, (unsigned)mlen, (char *)c);
     return 0;
 }
@@ -991,4 +992,24 @@ int crypto_aead_decrypt(
     return aez_decrypt(&ctx, (char *)npub, 12,
                  (char *)ad, (unsigned)adlen, 16,
                  (char *)c, (unsigned)clen, (char *)m);
+}
+
+int main(int argc, char const *argv[])
+{
+    /* code */
+    char * cipher ;
+    unsigned long long *clen ;
+    char *m;
+    unsigned long long mlen=256;
+    m = "Hello World bro!";
+    clen = (unsigned long long *)malloc(1);
+    char * k;
+    k = (char *)malloc(48);
+    char *n;
+    n = (char *)malloc(16);
+    cipher = (char *)malloc(32);
+    *clen = 272 ;
+    crypto_aead_encrypt(cipher,clen,m,mlen,NULL,NULL,NULL,n,k);
+    printf("Hello\n");
+    return 0;
 }

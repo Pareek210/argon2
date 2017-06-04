@@ -23,7 +23,7 @@
 #include "encoding.h"
 #include "core.h"
 
-const char *argon2_type2string(argon2_type type, int uppercase) {
+const char *argon2_type2string(argon2_type type, int uppercase) { /* Checked 1 */
     switch (type) {
         case Argon2_d:
             return uppercase ? "Argon2d" : "argon2d";
@@ -36,10 +36,11 @@ const char *argon2_type2string(argon2_type type, int uppercase) {
     return NULL;
 }
 
-// This function is the main cruxx! Does all the work.
-// Inputs -> context of the password and type of argon2 used. Returns the error code. This function is called in the argon2_hash function.
-// This in turn calls the functions initialize, fill_segment and finalize which refer blake2b.
-int argon2_ctx(argon2_context *context, argon2_type type) { // Parent function call
+/*    This function is the main cruxx! Does all the work.
+    Inputs -> context of the password and type of argon2 used. Returns the error code. This function is called in the argon2_hash function.
+    This in turn calls the functions initialize, fill_segment and finalize which refer blake2b.
+    Parent function call */
+int argon2_ctx(argon2_context *context, argon2_type type) { /* Checked 1 */
     /* 1. Validate all inputs */
     int result = validate_inputs(context);
     uint32_t memory_blocks, segment_length;
@@ -73,6 +74,7 @@ int argon2_ctx(argon2_context *context, argon2_type type) { // Parent function c
     instance.lane_length = segment_length * ARGON2_SYNC_POINTS;
     instance.lanes = context->lanes;
     instance.threads = context->threads;
+    instance.local_parallelism = context->local_parallelism;
     instance.type = type;
 
     if (instance.threads > instance.lanes) {
@@ -100,9 +102,9 @@ int argon2_ctx(argon2_context *context, argon2_type type) { // Parent function c
     return ARGON2_OK;
 }
 
-// The function called from the test, i.e. the main program and calls the argon2_ctx function which is the main function to be changed and handled for our goal. 
-int argon2_hash(const uint32_t t_cost, const uint32_t m_cost,
-                const uint32_t parallelism, const void *pwd,
+/* The function called from the test, i.e. the main program and calls the argon2_ctx function which is the main function to be changed and handled for our goal. */
+int argon2_hash(const uint32_t t_cost, const uint32_t m_cost, /* Checked 1 */
+                const uint32_t parallelism, const uint32_t local_parallelism, const void *pwd,
                 const size_t pwdlen, const void *salt, const size_t saltlen,
                 void *hash, const size_t hashlen, char *encoded,
                 const size_t encodedlen, argon2_type type,
@@ -147,10 +149,12 @@ int argon2_hash(const uint32_t t_cost, const uint32_t m_cost,
     context.m_cost = m_cost;
     context.lanes = parallelism;
     context.threads = parallelism;
+    context.local_parallelism = local_parallelism;
     context.allocate_cbk = NULL;
     context.free_cbk = NULL;
     context.flags = ARGON2_DEFAULT_FLAGS;
     context.version = version;
+
 
     result = argon2_ctx(&context, type);
 
@@ -369,7 +373,7 @@ int argon2id_verify_ctx(argon2_context *context, const char *hash) {
     return argon2_verify_ctx(context, hash, Argon2_id);
 }
 
-const char *argon2_error_message(int error_code) {
+const char *argon2_error_message(int error_code) { /* Checked 1 */
     switch (error_code) {
     case ARGON2_OK:
         return "OK";
@@ -407,6 +411,10 @@ const char *argon2_error_message(int error_code) {
         return "Too few lanes";
     case ARGON2_LANES_TOO_MANY:
         return "Too many lanes";
+    case ARGON2_LOCAL_PARALLELISM_TOO_LESS:
+        return "Too less local parallelism";
+    case ARGON2_LOCAL_PARALLELISM_TOO_MUCH:
+        return "Too much local parallelism";  
     case ARGON2_PWD_PTR_MISMATCH:
         return "Password pointer is NULL, but password length is not 0";
     case ARGON2_SALT_PTR_MISMATCH:

@@ -134,7 +134,7 @@ static void next_addresses(block *address_block, block *input_block) {
     fill_block(zero2_block, address_block, address_block, 0);
 }
 
-void fill_segment(const argon2_instance_t *instance,
+void fill_segment(const argon2_instance_t *instance, /* Checked 1 */
                   argon2_position_t position) {
     block *ref_block = NULL, *curr_block = NULL;
     block address_block, input_block;

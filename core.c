@@ -84,7 +84,7 @@ static void store_block(void *output, const block *src) {
 
 /***************Memory functions*****************/
 
-int allocate_memory(const argon2_context *context, uint8_t **memory, size_t num, size_t size) {
+int allocate_memory(const argon2_context *context, uint8_t **memory, size_t num, size_t size) { /* Checked 1 */
     size_t memory_size = num*size;
     if (memory == NULL) {
         return ARGON2_MEMORY_ALLOCATION_ERROR;
@@ -140,7 +140,7 @@ void clear_internal_memory(void *v, size_t n) {
   }
 }
 
-void finalize(const argon2_context *context, argon2_instance_t *instance) {
+void finalize(const argon2_context *context, argon2_instance_t *instance) { /* Checked 1 */
     if (context != NULL && instance != NULL) {
         block blockhash;
         uint32_t l;
@@ -360,7 +360,7 @@ fail:
 
 #endif /* ARGON2_NO_THREADS */
 
-int fill_memory_blocks(argon2_instance_t *instance) {
+int fill_memory_blocks(argon2_instance_t *instance) { /* Checked 1 */
 	if (instance == NULL || instance->lanes == 0) {
 	    return ARGON2_INCORRECT_PARAMETER;
     }
@@ -372,7 +372,7 @@ int fill_memory_blocks(argon2_instance_t *instance) {
 #endif
 }
 
-int validate_inputs(const argon2_context *context) {
+int validate_inputs(const argon2_context *context) { /* Checked 1 */
     if (NULL == context) {
         return ARGON2_INCORRECT_PARAMETER;
     }
@@ -488,6 +488,15 @@ int validate_inputs(const argon2_context *context) {
         return ARGON2_THREADS_TOO_MANY;
     }
 
+    /* Validate local parallelism */
+    if (ARGON2_MIN_LOCAL_PARALLELISM > context->local_parallelism) {
+        return ARGON2_LOCAL_PARALLELISM_TOO_LESS;
+    }
+
+    if (ARGON2_MAX_LOCAL_PARALLELISM < context->local_parallelism) {
+        return ARGON2_LOCAL_PARALLELISM_TOO_MUCH;
+    }
+
     if (NULL != context->allocate_cbk && NULL == context->free_cbk) {
         return ARGON2_FREE_MEMORY_CBK_NULL;
     }
@@ -499,8 +508,9 @@ int validate_inputs(const argon2_context *context) {
     return ARGON2_OK;
 }
 
-// Called by initialize. Fills the first 2 blocks of each lane.
-void fill_first_blocks(uint8_t *blockhash, const argon2_instance_t *instance) { // Change this.
+/*  Called by initialize. Fills the first 2 blocks of each lane.
+    Change this. */
+void fill_first_blocks(uint8_t *blockhash, const argon2_instance_t *instance) { /* Checked 1 */
     uint32_t l;
     /* Make the first and second block in each lane as G(H0||0||i) or
        G(H0||1||i) */
@@ -524,7 +534,8 @@ void fill_first_blocks(uint8_t *blockhash, const argon2_instance_t *instance) { 
 }
 
 // This function is called by initialize. Talk to Joel and decide how this has to be changed. Starting point----finally! 
-void initial_hash(uint8_t *blockhash, argon2_context *context, argon2_type type) { // Change this.
+// Change this.
+void initial_hash(uint8_t *blockhash, argon2_context *context, argon2_type type) { /* Checked 1 */
     blake2b_state BlakeHash;
     uint8_t value[sizeof(uint32_t)];
 
@@ -598,10 +609,11 @@ void initial_hash(uint8_t *blockhash, argon2_context *context, argon2_type type)
     blake2b_final(&BlakeHash, blockhash, ARGON2_PREHASH_DIGEST_LENGTH);
 }
 
-// This function is called by argon2_ctx and is the first function to look at. Takes in the arguments instance and context.
-// Calls the function initial_hash which has to be analysed next. 
-// Work - Initialization: Hashing inputs, allocating memory, filling first blocks
-int initialize(argon2_instance_t *instance, argon2_context *context) { // The first function to look at, called from argon2_ctx.
+/* This function is called by argon2_ctx and is the first function to look at. Takes in the arguments instance and context.
+Calls the function initial_hash which has to be analysed next. 
+Work - Initialization: Hashing inputs, allocating memory, filling first blocks
+The first function to look at, called from argon2_ctx. */
+int initialize(argon2_instance_t *instance, argon2_context *context) { /* Checked 1 */
     uint8_t blockhash[ARGON2_PREHASH_SEED_LENGTH];
     int result = ARGON2_OK;
 

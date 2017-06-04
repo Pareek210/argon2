@@ -39,6 +39,10 @@ extern "C" {
  * Argon2 input parameter restrictions
  */
 
+/* Minimum and maximum number of local parallelism (degree of parallelism) */
+#define ARGON2_MIN_LOCAL_PARALLELISM UINT32_C(1)
+#define ARGON2_MAX_LOCAL_PARALLELISM UINT32_C(0xFFFFFF)
+
 /* Minimum and maximum number of lanes (degree of parallelism) */
 #define ARGON2_MIN_LANES UINT32_C(1)
 #define ARGON2_MAX_LANES UINT32_C(0xFFFFFF)
@@ -151,7 +155,10 @@ typedef enum Argon2_ErrorCodes {
 
     ARGON2_DECODING_LENGTH_FAIL = -34,
 
-    ARGON2_VERIFY_MISMATCH = -35
+    ARGON2_VERIFY_MISMATCH = -35,
+
+    ARGON2_LOCAL_PARALLELISM_TOO_LESS = -36,
+    ARGON2_LOCAL_PARALLELISM_TOO_MUCH = -37
 } argon2_error_codes;
 
 /* Memory allocator types --- for external allocation */
@@ -185,7 +192,7 @@ typedef void (*deallocate_fptr)(uint8_t *memory, size_t bytes_to_allocate);
  * Then you initialize:
  Argon2_Context(out,8,pwd,32,salt,16,NULL,0,NULL,0,5,1<<20,4,4,NULL,NULL,true,false,false,false)
  */
-typedef struct Argon2_Context {
+typedef struct Argon2_Context { /* Checked 1*/
     uint8_t *out;    /* output array */
     uint32_t outlen; /* digest length */
 
@@ -212,6 +219,13 @@ typedef struct Argon2_Context {
     deallocate_fptr free_cbk;   /* pointer to memory deallocator */
 
     uint32_t flags; /* array of bool options */
+
+    /* My variables start */
+
+    uint32_t local_parallelism; /* Local parallelism while computing AES wide cipher */
+
+    /* My variables end */
+
 } argon2_context;
 
 /* Argon2 primitive type */
@@ -234,14 +248,14 @@ typedef enum Argon2_version {
  * @param uppercase Whether the string should have the first letter uppercase
  * @return NULL if invalid type, otherwise the string representation.
  */
-ARGON2_PUBLIC const char *argon2_type2string(argon2_type type, int uppercase);
+ARGON2_PUBLIC const char *argon2_type2string(argon2_type type, int uppercase); /* Checked 1 */
 
 /*
  * Function that performs memory-hard hashing with certain degree of parallelism
  * @param  context  Pointer to the Argon2 internal structure
  * @return Error code if smth is wrong, ARGON2_OK otherwise
  */
-ARGON2_PUBLIC int argon2_ctx(argon2_context *context, argon2_type type);
+ARGON2_PUBLIC int argon2_ctx(argon2_context *context, argon2_type type); /* Checked 1 */
 
 /**
  * Hashes a password with Argon2i, producing an encoded hash
@@ -412,7 +426,7 @@ ARGON2_PUBLIC int argon2_verify_ctx(argon2_context *context, const char *hash,
  * Get the associated error message for given error code
  * @return  The error message associated with the given error code
  */
-ARGON2_PUBLIC const char *argon2_error_message(int error_code);
+ARGON2_PUBLIC const char *argon2_error_message(int error_code); /* Checked 1 */
 
 /**
  * Returns the encoded hash length for the given input parameters
