@@ -39,7 +39,10 @@ enum argon2_core_constants {
     // Find out where this is used, this is the key to start changing the algorithm. 
     // This is the beginning of the hashing algorithm.
     ARGON2_PREHASH_DIGEST_LENGTH = 64,
-    ARGON2_PREHASH_SEED_LENGTH = 72
+    ARGON2_PREHASH_SEED_LENGTH = 72,
+
+    AES_ROUNDS = 4,
+    AES_MESSAGE_LENGTH = 16
     // Here we can give the enc_key for our AES and then run the Key-scheduling algorithm to get unique key for all the encryptions to avoid rekeying.
 };
 
@@ -69,7 +72,7 @@ void xor_block(block *dst, const block *src);
  * Used to evaluate the number and location of blocks to construct in each
  * thread
  */
-typedef struct Argon2_instance_t { /* Checked 1 */
+typedef struct Argon2_instance_t { /* Checked 2 */
     block *memory;          /* Memory pointer */
     uint32_t version;
     uint32_t passes;        /* Number of passes */
@@ -82,6 +85,7 @@ typedef struct Argon2_instance_t { /* Checked 1 */
     argon2_type type;
     int print_internals; /* whether to print the memory blocks */
     argon2_context *context_ptr; /* points back to original context */
+    __m128i global_key[2*AES_ROUNDS]; /* Key schedule for AES */
 } argon2_instance_t;
 
 /*
@@ -160,7 +164,7 @@ uint32_t index_alpha(const argon2_instance_t *instance,
  * @return ARGON2_OK if everything is all right, otherwise one of error codes
  * (all defined in <argon2.h>
  */
-int validate_inputs(const argon2_context *context); /* Checked 1 */
+int validate_inputs(const argon2_context *context); /* Checked 2 */
 
 /*
  * Hashes all the inputs into @a blockhash[PREHASH_DIGEST_LENGTH], clears
@@ -174,7 +178,7 @@ int validate_inputs(const argon2_context *context); /* Checked 1 */
  */
 
 // Initial Hash Important! Change!
-void initial_hash(uint8_t *blockhash, argon2_context *context, /* Checked 1*/
+void initial_hash(uint8_t *blockhash, argon2_context *context, /* Checked 2*/
                   argon2_type type);
 
 /*
@@ -185,7 +189,7 @@ void initial_hash(uint8_t *blockhash, argon2_context *context, /* Checked 1*/
  */
 
 // To be changed
-void fill_first_blocks(uint8_t *blockhash, const argon2_instance_t *instance); /* Checked 1*/
+void fill_first_blocks(uint8_t *blockhash, const argon2_instance_t *instance); /* Checked 2*/
 
 /*
  * Function allocates memory, hashes the inputs with Blake,  and creates first
@@ -199,7 +203,7 @@ void fill_first_blocks(uint8_t *blockhash, const argon2_instance_t *instance); /
  */
 
 // This has to be changed too!
-int initialize(argon2_instance_t *instance, argon2_context *context); /* Checked 1*/
+int initialize(argon2_instance_t *instance, argon2_context *context); /* Checked 2*/
 
 /*
  * XORing the last block of each lane, hashing it, making the tag. Deallocates
@@ -237,5 +241,7 @@ void fill_segment(const argon2_instance_t *instance, /* Checked 1 */
 // In accordance with the change in fill_segment
 // Calls by fill_segment.
 int fill_memory_blocks(argon2_instance_t *instance); /* Checked 1 */
+
+void gen_key(argon2_instance_t *instance, uint8_t *blockhash); /* Checked 2 */
 
 #endif

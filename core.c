@@ -372,7 +372,7 @@ int fill_memory_blocks(argon2_instance_t *instance) { /* Checked 1 */
 #endif
 }
 
-int validate_inputs(const argon2_context *context) { /* Checked 1 */
+int validate_inputs(const argon2_context *context) { /* Checked 2 */
     if (NULL == context) {
         return ARGON2_INCORRECT_PARAMETER;
     }
@@ -510,7 +510,7 @@ int validate_inputs(const argon2_context *context) { /* Checked 1 */
 
 /*  Called by initialize. Fills the first 2 blocks of each lane.
     Change this. */
-void fill_first_blocks(uint8_t *blockhash, const argon2_instance_t *instance) { /* Checked 1 */
+void fill_first_blocks(uint8_t *blockhash, const argon2_instance_t *instance) { /* Checked 2 */
     uint32_t l;
     /* Make the first and second block in each lane as G(H0||0||i) or
        G(H0||1||i) */
@@ -535,7 +535,7 @@ void fill_first_blocks(uint8_t *blockhash, const argon2_instance_t *instance) { 
 
 // This function is called by initialize. Talk to Joel and decide how this has to be changed. Starting point----finally! 
 // Change this.
-void initial_hash(uint8_t *blockhash, argon2_context *context, argon2_type type) { /* Checked 1 */
+void initial_hash(uint8_t *blockhash, argon2_context *context, argon2_type type) { /* Checked 2 */
     blake2b_state BlakeHash;
     uint8_t value[sizeof(uint32_t)];
 
@@ -613,7 +613,7 @@ void initial_hash(uint8_t *blockhash, argon2_context *context, argon2_type type)
 Calls the function initial_hash which has to be analysed next. 
 Work - Initialization: Hashing inputs, allocating memory, filling first blocks
 The first function to look at, called from argon2_ctx. */
-int initialize(argon2_instance_t *instance, argon2_context *context) { /* Checked 1 */
+int initialize(argon2_instance_t *instance, argon2_context *context) { /* Checked 2 */
     uint8_t blockhash[ARGON2_PREHASH_SEED_LENGTH];
     int result = ARGON2_OK;
 
@@ -638,6 +638,9 @@ int initialize(argon2_instance_t *instance, argon2_context *context) { /* Checke
                           ARGON2_PREHASH_SEED_LENGTH -
                               ARGON2_PREHASH_DIGEST_LENGTH);
 
+    /* Generating the key */
+    key_gen(instance, blockhash);
+
 #ifdef GENKAT
     initial_kat(blockhash, context, instance->type);
 #endif
@@ -650,3 +653,33 @@ int initialize(argon2_instance_t *instance, argon2_context *context) { /* Checke
 
     return ARGON2_OK;
 }
+
+void key_gen(argon2_instance_t * instance, uint8_t * blockhash) { /* Checked 2 */
+    /* The seed for key_scheduling */
+    uint8_t enc_key[16] ;
+
+    /* Get 16 bytes hash from the DIGEST*/
+    blake2b_long(enc_key, AES_MESSAGE_LENGTH, blockhash, ARGON2_PREHASH_DIGEST_LENGTH);
+
+    /* load the key in instance->global_key */
+    aes128_load_key(enc_key,instance->global_key);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

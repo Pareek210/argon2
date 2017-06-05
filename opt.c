@@ -21,6 +21,7 @@
 
 #include "argon2.h"
 #include "core.h"
+#include "aes.h"
 
 #include "blake2/blake2.h"
 #include "blake2/blamka-round-opt.h"
@@ -101,9 +102,11 @@ static void fill_block_new(__m128i *state, const block *ref_block,
         }
     }
 
-    /* This is where the new wide cipher comes in.*/
+    /* This is where the new wide cipher comes in.
+       state holds the message to be encrypted. Put it back in state after encryption. Number of blocks of size 128 bits is ARGON2_OWORDS_IN_BLOCK. 
+    */
 
-    
+    AES_ROUND(state, ARGON2_OWORDS_IN_BLOCK, instance->global_key);
 
     /* Wide Cipher ends! */
     
@@ -116,7 +119,7 @@ static void fill_block_new(__m128i *state, const block *ref_block,
 
 /* My Code end */
 
-static void next_addresses(block *address_block, block *input_block) {
+static void next_addresses(block *address_block, block *input_block) { /* Checked 2 */
     /*Temporary zero-initialized blocks*/
     __m128i zero_block[ARGON2_OWORDS_IN_BLOCK];
     __m128i zero2_block[ARGON2_OWORDS_IN_BLOCK];
@@ -128,13 +131,13 @@ static void next_addresses(block *address_block, block *input_block) {
     input_block->v[6]++;
 
     /*First iteration of G*/
-    fill_block(zero_block, input_block, address_block, 0);
+    fill_block_new(zero_block, input_block, address_block, 0);
 
     /*Second iteration of G*/
-    fill_block(zero2_block, address_block, address_block, 0);
+    fill_block_new(zero2_block, address_block, address_block, 0);
 }
 
-void fill_segment(const argon2_instance_t *instance, /* Checked 1 */
+void fill_segment(const argon2_instance_t *instance, /* Checked 2 */
                   argon2_position_t position) {
     block *ref_block = NULL, *curr_block = NULL;
     block address_block, input_block;
@@ -228,13 +231,25 @@ void fill_segment(const argon2_instance_t *instance, /* Checked 1 */
         curr_block = instance->memory + curr_offset;
         if (ARGON2_VERSION_10 == instance->version) {
             /* version 1.2.1 and earlier: overwrite, not XOR */
-            fill_block(state, ref_block, curr_block, 0);
+            fill_block_new(state, ref_block, curr_block, 0);
         } else {
             if(0 == position.pass) {
-                fill_block(state, ref_block, curr_block, 0);
+                fill_block_new(state, ref_block, curr_block, 0);
             } else {
-                fill_block(state, ref_block, curr_block, 1);
+                fill_block_new(state, ref_block, curr_block, 1);
             }
         }
     }
 }
+
+
+/* My round function/wide cipher using AES */
+
+AES_ROUND(__m128i *state, size_t message_len, __m128i *global_key){
+    
+
+}
+
+
+
+

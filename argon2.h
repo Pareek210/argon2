@@ -43,6 +43,9 @@ extern "C" {
 #define ARGON2_MIN_LOCAL_PARALLELISM UINT32_C(1)
 #define ARGON2_MAX_LOCAL_PARALLELISM UINT32_C(0xFFFFFF)
 
+/* Number of rounds in AES 
+#define AES_ROUNDS UINT32_C(4) */
+
 /* Minimum and maximum number of lanes (degree of parallelism) */
 #define ARGON2_MIN_LANES UINT32_C(1)
 #define ARGON2_MAX_LANES UINT32_C(0xFFFFFF)
@@ -192,7 +195,7 @@ typedef void (*deallocate_fptr)(uint8_t *memory, size_t bytes_to_allocate);
  * Then you initialize:
  Argon2_Context(out,8,pwd,32,salt,16,NULL,0,NULL,0,5,1<<20,4,4,NULL,NULL,true,false,false,false)
  */
-typedef struct Argon2_Context { /* Checked 1*/
+typedef struct Argon2_Context { /* Checked 2*/
     uint8_t *out;    /* output array */
     uint32_t outlen; /* digest length */
 
@@ -248,7 +251,7 @@ typedef enum Argon2_version {
  * @param uppercase Whether the string should have the first letter uppercase
  * @return NULL if invalid type, otherwise the string representation.
  */
-ARGON2_PUBLIC const char *argon2_type2string(argon2_type type, int uppercase); /* Checked 1 */
+ARGON2_PUBLIC const char *argon2_type2string(argon2_type type, int uppercase);
 
 /*
  * Function that performs memory-hard hashing with certain degree of parallelism

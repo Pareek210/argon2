@@ -23,7 +23,7 @@
 #include "encoding.h"
 #include "core.h"
 
-const char *argon2_type2string(argon2_type type, int uppercase) { /* Checked 1 */
+const char *argon2_type2string(argon2_type type, int uppercase) {
     switch (type) {
         case Argon2_d:
             return uppercase ? "Argon2d" : "argon2d";
