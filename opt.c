@@ -76,7 +76,7 @@ static void fill_block(__m128i *state, const block *ref_block,
 
 
 static void fill_block_new(__m128i *state, const block *ref_block,
-                       block *next_block, int with_xor) {
+                       block *next_block, int with_xor, uint32_t local_parallelism) {
     _m128i block_XY[ARGON2_OWORDS_IN_BLOCK];
     unsigned int m = ARGON2_OWORDS_IN_BLOCK * 8 ;
     unsigned int i;
@@ -231,24 +231,17 @@ void fill_segment(const argon2_instance_t *instance, /* Checked 2 */
         curr_block = instance->memory + curr_offset;
         if (ARGON2_VERSION_10 == instance->version) {
             /* version 1.2.1 and earlier: overwrite, not XOR */
-            fill_block_new(state, ref_block, curr_block, 0);
+            fill_block_new(state, ref_block, curr_block, 0, instance->local_parallelism);
         } else {
             if(0 == position.pass) {
-                fill_block_new(state, ref_block, curr_block, 0);
+                fill_block_new(state, ref_block, curr_block, 0, instance->local_parallelism);
             } else {
-                fill_block_new(state, ref_block, curr_block, 1);
+                fill_block_new(state, ref_block, curr_block, 1, instance->local_parallelism);
             }
         }
     }
 }
 
-
-/* My round function/wide cipher using AES */
-
-AES_ROUND(__m128i *state, size_t message_len, __m128i *global_key){
-    
-
-}
 
 
 
